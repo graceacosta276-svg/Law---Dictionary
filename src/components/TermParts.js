@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DIFF_META } from "@/lib/seedTerms";
-import { IconBook, IconStar, IconX } from "@/components/icons";
+import { IconBook, IconStar, IconX, IconEdit } from "@/components/icons";
 
 export function DifficultyBadge({ level }) {
   const m = DIFF_META[level] || DIFF_META.beginner;
@@ -47,7 +47,7 @@ function SectionBlock({ title, accent, children }) {
   );
 }
 
-export function TermDetail({ term, isFav, onToggleFav, note, onNoteChange, onRelatedClick, onClose, findByName }) {
+export function TermDetail({ term, isFav, onToggleFav, note, onNoteChange, onRelatedClick, onClose, onEdit, findByName }) {
   const [draft, setDraft] = useState(note || "");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -74,6 +74,16 @@ export function TermDetail({ term, isFav, onToggleFav, note, onNoteChange, onRel
           >
             <IconStar size={16} color={isFav ? "#5a4712" : "#fff"} fill={isFav ? "#5a4712" : "none"} />
           </button>
+          {onEdit && (
+            <button
+              onClick={() => onEdit(term.id)}
+              aria-label="Edit this term"
+              className="rounded-full p-1.5"
+              style={{ background: "rgba(255,255,255,0.25)" }}
+            >
+              <IconEdit size={16} color="#fff" />
+            </button>
+          )}
           {onClose && (
             <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.25)" }}>
               <IconX size={16} color="#fff" />
