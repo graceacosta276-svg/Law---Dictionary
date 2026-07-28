@@ -36,8 +36,32 @@ function toArray(csv) {
     .filter(Boolean);
 }
 
-export default function AddTermForm({ onSubmit, onCancel, busy }) {
-  const [form, setForm] = useState(EMPTY);
+function toCsv(arr) {
+  return Array.isArray(arr) ? arr.join(", ") : "";
+}
+
+function buildInitialState(initialTerm) {
+  if (!initialTerm) return EMPTY;
+  return {
+    term: initialTerm.term || "",
+    category: initialTerm.category || CATEGORY_LIST[0],
+    difficulty: initialTerm.difficulty || "beginner",
+    simple: initialTerm.simple || "",
+    legal: initialTerm.legal || "",
+    beginner: initialTerm.beginner || "",
+    why: initialTerm.why || "",
+    example: initialTerm.example || "",
+    memory_tip: initialTerm.memory_tip || "",
+    latin: initialTerm.latin || "",
+    related_laws: toCsv(initialTerm.related_laws),
+    cases: toCsv(initialTerm.cases),
+    related: toCsv(initialTerm.related),
+  };
+}
+
+export default function AddTermForm({ onSubmit, onCancel, busy, initialTerm = null }) {
+  const isEditing = Boolean(initialTerm);
+  const [form, setForm] = useState(() => buildInitialState(initialTerm));
   const [error, setError] = useState("");
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -65,12 +89,14 @@ export default function AddTermForm({ onSubmit, onCancel, busy }) {
       related: toArray(form.related),
     };
     const ok = await onSubmit(payload);
-    if (ok) setForm(EMPTY);
+    if (ok && !isEditing) setForm(EMPTY);
   };
 
   return (
     <form onSubmit={submit} className="rounded-xl p-4 space-y-3" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-      <h3 className="font-serif text-lg font-bold" style={{ color: "var(--ink)" }}>Add a New Term</h3>
+      <h3 className="font-serif text-lg font-bold" style={{ color: "var(--ink)" }}>
+        {isEditing ? `Edit "${initialTerm.term}"` : "Add a New Term"}
+      </h3>
 
       {error && (
         <div className="rounded-lg p-2 text-xs" style={{ background: "var(--pink-light)", color: "#7A3542", border: "1px solid var(--pink)" }}>
@@ -181,7 +207,7 @@ export default function AddTermForm({ onSubmit, onCancel, busy }) {
           className="rounded-full px-4 py-2 text-sm font-semibold text-white"
           style={{ background: "var(--green)" }}
         >
-          {busy ? "Saving..." : "Save Term"}
+          {busy ? "Saving..." : isEditing ? "Save Changes" : "Save Term"}
         </button>
         <button
           type="button"
