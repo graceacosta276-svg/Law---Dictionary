@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { CATEGORY_LIST, DIFF_META } from "@/lib/seedTerms";
+import { CATEGORY_LIST, DIFF_META, SEED_TERMS } from "@/lib/seedTerms";
 import { TermDetail, TermRow } from "@/components/TermParts";
 import AddTermForm from "@/components/AddTermForm";
 import QuizMode from "@/components/QuizMode";
@@ -59,7 +59,16 @@ export default function DictionaryApp({ session }) {
       ]);
       if (termsErr) throw termsErr;
 
-      setTerms(termRows || []);
+      let finalTerms = termRows || [];
+      if (finalTerms.length === 0) {
+        const rows = SEED_TERMS.map((t) => ({ ...t, user_id: userId }));
+        const { data: inserted, error: seedErr } = await supabase.from("terms").insert(rows).select();
+        if (!seedErr && inserted) {
+          finalTerms = inserted.sort((a, b) => a.term.localeCompare(b.term));
+        }
+      }
+
+      setTerms(finalTerms);
       setFavorites((favRows || []).map((r) => r.term_id));
       const noteMap = {};
       (noteRows || []).forEach((r) => (noteMap[r.term_id] = r.content));
@@ -68,7 +77,7 @@ export default function DictionaryApp({ session }) {
       setOffline(false);
 
       try {
-        window.localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(termRows || []));
+        window.localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(finalTerms));
       } catch (e) {
         /* storage unavailable, non-critical */
       }
