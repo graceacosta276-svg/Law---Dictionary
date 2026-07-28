@@ -25,6 +25,7 @@ export const IconPlus = (p) => <Icon glyph="＋" {...p} />;
 export const IconSignOut = (p) => <Icon glyph="⎋" {...p} />;
 export const IconWifiOff = (p) => <Icon glyph="⚠" {...p} />;
 export const IconUpload = (p) => <Icon glyph="⇪" {...p} />;
+export const IconEdit = (p) => <Icon glyph="✎" {...p} />;
 
 export function IconStar({ size = 16, color, fill }) {
   const filled = fill && fill !== "none";
