@@ -39,6 +39,7 @@ export default function DictionaryApp({ session }) {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [editingTermId, setEditingTermId] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState(null);
 
   const [terms, setTerms] = useState([]);
@@ -206,6 +207,39 @@ export default function DictionaryApp({ session }) {
     [userId]
   );
 
+  const editTerm = useCallback(
+    async (payload) => {
+      if (!editingTermId) return false;
+      setSavingTerm(true);
+      try {
+        const { data, error } = await supabase
+          .from("terms")
+          .update(payload)
+          .eq("id", editingTermId)
+          .eq("user_id", userId)
+          .select()
+          .single();
+        if (error) throw error;
+        setTerms((prev) => prev.map((t) => (t.id === editingTermId ? data : t)).sort((a, b) => a.term.localeCompare(b.term)));
+        setSelectedId(editingTermId);
+        setEditingTermId(null);
+        setView("detail");
+        return true;
+      } catch (err) {
+        alert("Could not save changes: " + err.message);
+        return false;
+      } finally {
+        setSavingTerm(false);
+      }
+    },
+    [userId, editingTermId]
+  );
+
+  const startEditingTerm = useCallback((id) => {
+    setEditingTermId(id);
+    setView("edit");
+  }, []);
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -312,10 +346,22 @@ export default function DictionaryApp({ session }) {
             onNoteChange={updateNote}
             onRelatedClick={selectTerm}
             onClose={() => setView("home")}
+            onEdit={startEditingTerm}
             findByName={findByName}
           />
         ) : view === "add" ? (
           <AddTermForm onSubmit={addTerm} onCancel={() => setView("all")} busy={savingTerm} />
+        ) : view === "edit" && terms.find((t) => t.id === editingTermId) ? (
+          <AddTermForm
+            onSubmit={editTerm}
+            onCancel={() => {
+              setEditingTermId(null);
+              setSelectedId(editingTermId);
+              setView("detail");
+            }}
+            busy={savingTerm}
+            initialTerm={terms.find((t) => t.id === editingTermId)}
+          />
         ) : view === "import" ? (
           <BulkImport userId={userId} existingTerms={terms} onImported={fetchAll} />
         ) : view === "home" ? (
